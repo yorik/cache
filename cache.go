@@ -86,11 +86,6 @@ func (w *cachedWriter) Write(data []byte) (int, error) {
 	ret, err := w.ResponseWriter.Write(data)
 	if err == nil {
 		store := w.store
-		var cache responseCache
-		if err := store.Get(w.key, &cache); err == nil {
-			data = append(cache.Data, data...)
-		}
-
 		//cache responses with a status code < 300
 		if w.Status() < 300 {
 			val := responseCache{
@@ -99,9 +94,9 @@ func (w *cachedWriter) Write(data []byte) (int, error) {
 				data,
 			}
 			err = store.Set(w.key, val, w.expire)
-			// if err != nil {
-			// 	// need logger
-			// }
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 	return ret, err
